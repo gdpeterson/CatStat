@@ -639,7 +639,37 @@ p + geom_point(color = bf.green) + facet_wrap(~field, ncol = 3, scales = "free_y
 
 ```
 
-I don't know how to make it so that only the ordinal variables sort by level instead of proportion while faceting. (Something to figure out later?) But to see how that looks, let's do a cleveland plot for scale.
+I don't know how to make it so that only the ordinal variables sort by level instead of proportion while faceting. (Something to figure out later?) 
+
+Here's an attempt
+```{r}
+library(tidytext)
+
+bf.plot <- bf.prop |>
+  mutate(
+    sort_value = if_else(
+      field %in% c("scale", "decade"),
+      as.numeric(option),  # Ordinal: order by factor level
+      prop                 # Nominal: order by proportion
+    )
+  )
+
+p <- ggplot(
+  bf.plot,
+  aes(x = prop,
+      y = reorder_within(option, sort_value, field))
+)
+
+p + geom_point(color = bf.green) +
+  facet_wrap(~field, ncol = 3, scales = "free_y") +
+  scale_y_reordered() +
+  labs(title = "Proportions of categorical items",
+       x = "proportion", y = NULL) +
+  bf.theme
+
+
+```
+But to see how that looks, let's do a cleveland plot for scale.
 
 ```{r}
 
