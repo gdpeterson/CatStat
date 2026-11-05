@@ -641,31 +641,30 @@ p + geom_point(color = bf.green) + facet_wrap(~field, ncol = 3, scales = "free_y
 
 I don't know how to make it so that only the ordinal variables sort by level instead of proportion while faceting. (Something to figure out later?) 
 
-Here's an attempt
-```{r}
+Here's an attempt - but not sure if works without being able to load text
+```{r, fig.width = 12, fig.height = 12}
 library(tidytext)
+# tidytext is needed because standard R function reorder(option, prop) orders categories globally,
+# tidy text has two functions that are not available in standard ggplot2:
+#  - reorder_within() – orders categories independently within each facet.
+#  - scale_y_reordered() – removes the extra labels that reorder_within() adds internally.
 
-bf.plot <- bf.prop |>
-  mutate(
-    sort_value = if_else(
-      field %in% c("scale", "decade"),
-      as.numeric(option),  # Ordinal: order by factor level
-      prop                 # Nominal: order by proportion
-    )
-  )
 
-p <- ggplot(
-  bf.plot,
-  aes(x = prop,
-      y = reorder_within(option, sort_value, field))
-)
+# This code assumes option is a factor with the correct ordinal levels
+# If option is a character variable it won't work
 
-p + geom_point(color = bf.green) +
+ggplot(bf.prop,
+       aes(x = prop,
+           y = tidytext::reorder_within(
+             option,
+             if_else(field %in% c("scale", "decade"),
+                     as.numeric(option), prop),
+             field))) +
+  geom_point(color = bf.green) +
   facet_wrap(~field, ncol = 3, scales = "free_y") +
-  scale_y_reordered() +
+  tidytext::scale_y_reordered() +
   labs(title = "Proportions of categorical items",
-       x = "proportion", y = NULL) +
-  bf.theme
+       x = "proportion", y = NULL) + bf.theme
 
 
 ```
